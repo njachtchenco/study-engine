@@ -3,7 +3,11 @@
     "allow": [
       "Bash(python3 engine/study.py:*)",
       "Bash(python3 engine/gate.py:*)",
-      "Bash(python3 engine/build_view.py:*)"
+      "Bash(python3 engine/build_view.py:*)",
+      "Bash(open -a \"Google Chrome\" view/dashboard.html *)",
+      "Bash(open view/dashboard.html *)",
+      "Bash(open view/demo.html *)",
+      "Bash(date *)"
     ]
   }
 }

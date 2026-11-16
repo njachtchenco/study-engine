@@ -280,7 +280,9 @@ never a level.
 There's no scheduling in this version (see the end). Review mode runs cards
 they bring: the ones Anki says are due, pasted in, or the "Cards" file in this
 Project. If they have no Anki, take up to 20 from the Cards file, the most
-recently added first.
+recently added first. If there are no cards anywhere yet, say that's normal
+at the start: cards come from the mistakes in study sessions, so suggest
+socratic on the next topic instead.
 
 - Read all the cards first. Drop any on material not covered yet and list them
   at the end.

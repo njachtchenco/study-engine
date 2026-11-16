@@ -103,7 +103,9 @@ short "where I am" note you paste back into the Project.
    you can see what a few weeks of studying looks like.
 
 Claude asks before it saves a file or runs a command. That's normal: allow
-it. Everything Study Engine saves stays in this folder.
+it. Everything Study Engine saves stays in this folder. If it asks before
+every save, open the mode menu in the row under the message box and choose
+**Accept edits**. Claude remembers that for this folder.
 
 Already use Claude Code in a terminal or a code editor? It works there too:
 clone this repo, start Claude Code in the folder and type `/interview`.
@@ -138,11 +140,14 @@ It tells you what last time found, whether you're on track, and the one thing
 to do first. Usually that's `/socratic` on the next module, with `/explain` only
 when you're truly stuck, and `/examine` when you think you've got it.
 
-Every day, a few minutes of:
+Every mistake you make in those sessions becomes a flashcard. Once you have
+some, spend a few minutes a day on:
 
 ```
 /review
 ```
+
+(On day one there's nothing to review yet. That's normal.)
 
 ## It works for any subject
 

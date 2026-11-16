@@ -29,20 +29,26 @@ Mirrored from "Study / Review" in the repo's `CLAUDE.md`; change both together.
    ```
    Then per topic, which gives you the cards themselves:
    ```bash
-   python3 engine/study.py due <slug>
+   python3 engine/study.py due <slug> --text
    ```
    **Load the whole deck once, answers included, and read from it for the
    rest of the session.** Never fetch cards one call at a time: a five-card
-   review took six calls that one call would have covered. Trim the output so
-   it stays small:
-   ```bash
-   python3 engine/study.py due <slug> | python3 -c "
-   import json,sys
-   for c in json.load(sys.stdin)['cards']:
-       print(c['id'], '|', c['q'], '|', c['a'])"
-   ```
+   review took six calls that one call would have covered. `--text` prints a
+   count line, then one `id | question | answer` line per due card. Don't
+   pipe the output through anything else: every extra command is a
+   permission prompt the learner has to approve.
+
    Having the answers in context is not showing them. Say nothing from the
    answer until the learner has attempted that card (step 2 and 3 still hold).
+
+   **When nothing is due, say what to do instead and stop.** Don't log a
+   session; nothing was reviewed.
+   - **0 cards in the deck** (a new topic): "No flashcards yet. They come
+     from your study sessions: every mistake becomes a card. Start with
+     `/socratic <slug>`, or `/start <slug>` to see what's next." This is
+     normal on the first day, so don't make it sound like something broke.
+   - **Cards in the deck, none due:** say when the next one is due (the count
+     line gives the date) and suggest `/start <slug>` for today's work.
 
    Before asking anything, drop cards on material not covered yet (the class
    hasn't reached it, or the learner hasn't studied it; check the topic's

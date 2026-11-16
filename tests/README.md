@@ -5,7 +5,7 @@ a throwaway root (`STUDY_ENGINE_ROOT`), so it tests the thing the skills
 actually call rather than a reimplementation of it.
 
 ```bash
-python3 tests/test_gate.py     # 49 checks
+python3 tests/test_gate.py     # 51 checks
 ```
 
 Most checks are negative tests: they put the engine in a state the gate is meant
@@ -39,7 +39,7 @@ cp engine/gate.py /tmp/gate.orig
 # Expect: exit 1, "a chunk redo does not mark the module passed" fails.
 # Watched 2026-10-15.
 
-cp /tmp/gate.orig engine/gate.py   # and confirm 49/49 again
+cp /tmp/gate.orig engine/gate.py   # and confirm 51/51 again
 ```
 
 The kit checks, watched 2026-11-15 (back up and restore the file the same way):
@@ -59,6 +59,11 @@ The kit checks, watched 2026-11-15 (back up and restore the file the same way):
 
 # engine/build_view.py, overview_html: 'overrides = sum(...)' -> 'overrides = 0'.
 # Expect: "dashboard reports the override count" fails.
+
+# engine/store.py, log_session: 'read_topic(slug)' -> 'pass'.
+# Expect: "log refuses a topic that doesn't exist and makes no folder" fails.
+# Watched 2026-11-16: the unguarded log answered
+# {"logged": "topics/loose-topik/sessions/...-review.md"} for a typo'd slug.
 ```
 
 The diagnose checks, watched 2026-11-15:

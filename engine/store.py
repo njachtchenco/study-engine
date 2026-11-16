@@ -288,6 +288,9 @@ def log_session(slug, role, body, module=None, score=None, misses=None,
     """
     if role not in ROLES:
         raise SystemExit("unknown role %r (want one of %s)" % (role, ", ".join(ROLES)))
+    # A mistyped slug would otherwise make a stray topic folder and file the
+    # session where nothing reads it.
+    read_topic(slug)
     d = os.path.join(topic_dir(slug), "sessions")
     os.makedirs(d, exist_ok=True)
     when = datetime.datetime.fromisoformat(at) if at else datetime.datetime.now()

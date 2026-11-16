@@ -320,6 +320,18 @@ def main():
         check("20 sessions is not",
               rc == 0 and out["sessions_total"] == 20 and out["thin"] is False, out)
 
+        # A mistyped slug must not make a stray topic and lose the session.
+        rc, out = run("study.py", "log", "loose-topik", "--role", "review",
+                      "--body-file", "# typo", root=root)
+        check("log refuses a topic that doesn't exist and makes no folder",
+              rc != 0 and "no such topic" in str(out)
+              and not os.path.exists(os.path.join(root, "topics", "loose-topik")), out)
+
+        # /review's first-day branch reads this count line.
+        rc, text = run("study.py", "due", "loose-topic", "--text", root=root)
+        check("due --text says when the deck is empty",
+              rc == 0 and text.strip() == "loose-topic: 0 due, 0 cards in the deck", text)
+
         print("\nDASHBOARD")
         rc, out = run("build_view.py", root=root)
         check("dashboard builds", rc == 0 and out["topics"] == 2, out)

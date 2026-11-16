@@ -126,7 +126,22 @@ def cmd_add_cards(a):
 
 
 def cmd_due(a):
-    if a.topic:
+    if a.topic and a.text:
+        # One header line, then "id | question | answer" per due card. The
+        # header tells an empty deck (nothing studied yet) from a deck with
+        # nothing due today, which /review answers differently.
+        store.read_topic(a.topic)
+        deck = store.read_cards(a.topic)
+        cards = scheduler.due(a.topic)
+        line = "%s: %d due, %d card%s in the deck" % (
+            a.topic, len(cards), len(deck), "" if len(deck) == 1 else "s")
+        later = sorted(c["due"] for c in deck if c not in cards)
+        if not cards and later:
+            line += ", next due %s" % later[0]
+        print(line)
+        for c in cards:
+            print("%s | %s | %s" % (c["id"], c["q"], c["a"]))
+    elif a.topic:
         cards = scheduler.due(a.topic)
         out({"topic": a.topic, "due": len(cards), "cards": cards})
     else:
@@ -364,6 +379,8 @@ def main():
 
     s = sub.add_parser("due", help="what is due now")
     s.add_argument("topic", nargs="?")
+    s.add_argument("--text", action="store_true",
+                   help="with a topic: a count line, then 'id | question | answer' per due card")
     s.set_defaults(fn=cmd_due)
 
     s = sub.add_parser("grade")

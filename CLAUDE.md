@@ -97,6 +97,7 @@ python3 engine/study.py topics                  # every topic and its progress
 python3 engine/study.py show <topic>            # one topic in full
 python3 engine/study.py due                     # cards due, all topics
 python3 engine/study.py due <topic>             # the cards themselves
+python3 engine/study.py due <topic> --text      # same, as plain lines (/review)
 python3 engine/study.py grade <topic> c003 good # again | hard | good | easy
 python3 engine/study.py corpus <topic> --text   # every miss, gap, hold, weak card (/diagnose)
 python3 engine/study.py clock --start <epoch> --minutes 10  # /spar's clock, exit 1 at time
@@ -108,7 +109,7 @@ open view/dashboard.html                        # look at it
 ```
 
 ```bash
-python3 tests/test_gate.py                      # the whole suite (49 checks), ~seconds
+python3 tests/test_gate.py                      # the whole suite (51 checks), ~seconds
 python3 engine/study.py log <topic> --role socratic --module m02 \
     --score ... --misses '[{"q":"...","a":"..."}]' --body-file -   # write a session file
 ```
@@ -134,7 +135,9 @@ regenerates in well under a second.
 - `study.py log` increments the module's `attempts` counter as a side effect,
   so logging the same sitting twice inflates it. Session file names go to
   the second; a second session logged in the same second gets a `-2` suffix
-  rather than overwriting the first. Roles in `LOOKBACK_ROLES` (`diagnose`, `spar`)
+  rather than overwriting the first. It refuses a topic that doesn't exist,
+  so a mistyped slug fails loudly instead of filing the session in a stray
+  folder. Roles in `LOOKBACK_ROLES` (`diagnose`, `spar`)
   log against a module without counting as an attempt on it or moving the
   dashboard's "You're on" line. The role list (`ROLES` in
   `store.py`) is a closed set: a new skill needs an entry there before it can

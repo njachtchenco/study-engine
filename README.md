@@ -3,6 +3,11 @@
 An AI study system for Claude Code that makes you do the work, because doing
 the work is the part that sticks.
 
+**Two ways to use it.** The full version runs in the Claude desktop app and
+needs a paid Claude plan ([set it up](#set-it-up)). On the free plan, use the
+lite version: **[open the lite setup page](https://njachtchenco.github.io/study-engine/lite/setup.html)**.
+Nothing to download.
+
 Most people use AI to study by asking it to explain things. That feels like
 learning. The research says it mostly isn't:
 
@@ -54,11 +59,12 @@ These are built into the code, because they're exactly what a person skips:
 You can always override either one. It asks for a reason, writes it down, and
 the count shows on your dashboard. That's the whole consequence.
 
-## No Claude Code? Use the lite version
+## On the free plan? Use the lite version
 
-Open `lite/setup.html` in your browser. It gets you going in about three
-minutes on claude.ai, free account included: make a Project, paste the
-instructions, add your syllabus or notes, start. Seven of the roles and the
+**[Open the lite setup page](https://njachtchenco.github.io/study-engine/lite/setup.html).**
+It gets you going in about three minutes on claude.ai, free account included:
+make a Project, paste the instructions, add your syllabus or notes, start. Do
+the setup on a computer, not a phone. Seven of the roles and the
 same two rules, with three things missing: nothing enforces the rules (it asks, you answer
 honestly), there's no dashboard, and there's no spaced scheduling (use Anki
 for your cards). Every session ends with your mistakes as flashcards and a
@@ -66,40 +72,45 @@ short "where I am" note you paste back into the Project.
 
 ## What you need
 
-- **Claude Code**, installed and signed in. Setup and plans:
-  [claude.com/claude-code](https://claude.com/claude-code).
-- **Python 3.9 or newer.** On a Mac, open Terminal and type
-  `python3 --version`. If it offers to install developer tools, say yes.
-  Nothing else to install: no packages, no accounts.
-- **Mac or Linux.** On Windows, use WSL (Windows Subsystem for Linux); plain
-  Windows isn't tested yet.
+- **A paid Claude plan.** The full version needs one (Pro or higher, see
+  [claude.com/pricing](https://claude.com/pricing)). On the free plan, use the
+  [lite version](#on-the-free-plan-use-the-lite-version).
+- **The Claude desktop app**, signed in:
+  [claude.com/download](https://claude.com/download). Claude Code is built
+  into its **Code** tab, so you don't need Terminal or a code editor.
+- **Python 3.9 or newer.** Study Engine is a few small Python programs that
+  Claude runs for you. On a Mac, the first time Claude runs one, your Mac may
+  say the `python3` command needs the command line developer tools. Click
+  **Install**, wait a few minutes (it's a download of about 1 GB), then tell
+  Claude to try again. On Windows, install Python from
+  [python.org](https://www.python.org/downloads/) first.
+- **A Mac or a Windows PC.** It's tested on a Mac. Windows should work but
+  isn't tested yet.
 
-## Set it up (about 5 minutes)
+## Set it up
 
-1. Get the folder: on this page, click **Code**, then **Download ZIP**, and
-   unzip it somewhere you'll find it. Or, if you use git:
-   ```bash
-   git clone https://github.com/njachtchenco/study-engine.git
-   ```
-2. Open Terminal in that folder and start Claude Code:
-   ```bash
-   cd study-engine
-   claude
-   ```
-   The first time, Claude Code asks whether you trust this folder. Say yes:
-   that also turns on the folder's settings, which let the study commands run
-   without asking your permission every time.
-3. Want to see what it looks like first? Ask Claude to run this, or run it
-   yourself:
-   ```bash
-   python3 engine/build_view.py --demo && open view/demo.html
-   ```
-   That's a made-up example topic, so you can see a dashboard with some
-   history in it.
+1. **Get the folder.** On this page, click the green **Code** button, then
+   **Download ZIP**. Open your Downloads folder and double-click
+   `study-engine-main.zip`. That makes a folder called `study-engine-main`.
+2. **Open it in Claude.** Open the Claude desktop app and click **Code** at
+   the top of the sidebar. In the row under the message box, click the first
+   button and choose the top entry under **Local**. Then click the folder
+   button next to it, choose **Open folder…**, and pick `study-engine-main`.
+   Your Mac asks whether Claude can access your Downloads folder. Click
+   **Allow**.
+3. **See an example first (optional).** Type `Show me the demo dashboard`.
+   Claude builds a made-up example topic and opens it in your browser, so
+   you can see what a few weeks of studying looks like.
+
+Claude asks before it saves a file or runs a command. That's normal: allow
+it. Everything Study Engine saves stays in this folder.
+
+Already use Claude Code in a terminal or a code editor? It works there too:
+clone this repo, start Claude Code in the folder and type `/interview`.
 
 ## Your first session
 
-Say you have a trip to Spain in March. In Claude Code:
+Say you have a trip to Spain in March. In the **Code** tab, type:
 
 ```
 /interview Spanish for my trip

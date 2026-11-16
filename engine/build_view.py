@@ -619,7 +619,17 @@ h1,h2,p{margin:0}
 .small{font-size:.86rem}
 .center{text-align:center}
 .num{font-variant-numeric:tabular-nums}
-.tabs{display:flex;gap:8px;overflow-x:auto;padding:0 2px 6px;scrollbar-width:none}
+.tabwrap{position:relative}
+.tabs{position:relative;display:flex;gap:8px;overflow-x:auto;padding:0 2px 6px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.more{position:absolute;top:0;bottom:6px;z-index:1;width:56px;display:flex;align-items:center;padding:0;border:0;
+  cursor:pointer;color:var(--ink);font:inherit}
+.more[hidden]{display:none}
+.more.left{left:0;justify-content:flex-start;background:linear-gradient(90deg,var(--bg) 55%,transparent)}
+.more.right{right:0;justify-content:flex-end;background:linear-gradient(270deg,var(--bg) 55%,transparent)}
+.more span{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--key);
+  box-shadow:0 3px 0 var(--key-lip)}
+.more:active span{transform:translateY(3px);box-shadow:none}
 .tabs a{flex:none;font-size:15px;font-weight:700;padding:8px 14px;border-radius:12px;text-decoration:none;
   background:var(--key);box-shadow:0 3px 0 var(--key-lip)}
 .tabs a[aria-current="page"]{background:var(--violet);color:#fff;box-shadow:none;transform:translateY(3px);font-weight:800}
@@ -740,14 +750,49 @@ SCRIPT = """<script>
   if (q === "dark" || q === "light") document.documentElement.setAttribute("data-theme", q);
   var panels = [].slice.call(document.querySelectorAll(".panel"));
   var tabs = [].slice.call(document.querySelectorAll(".tabs a"));
+  // More tabs than fit the column: arrows at whichever end has more, the
+  // wheel scrolls the bar sideways, and the chosen tab slides into view.
+  var bar = document.querySelector(".tabs");
+  var moreL = document.querySelector(".more.left"), moreR = document.querySelector(".more.right");
+  function edges() {
+    var max = bar.scrollWidth - bar.clientWidth;
+    moreL.hidden = bar.scrollLeft <= 2;
+    moreR.hidden = bar.scrollLeft >= max - 2;
+  }
+  function reveal(a, smooth) {
+    var pad = 56, x = a.offsetLeft, w = a.offsetWidth, to = null;
+    if (x - pad < bar.scrollLeft) to = x - pad;
+    else if (x + w + pad > bar.scrollLeft + bar.clientWidth) to = x + w + pad - bar.clientWidth;
+    if (to !== null) bar.scrollTo({left: Math.max(0, to), behavior: smooth ? "smooth" : "auto"});
+  }
+  function nudge(dir) {
+    bar.scrollBy({left: dir * Math.round(bar.clientWidth * 0.7), behavior: "smooth"});
+  }
+  moreL.addEventListener("click", function () { nudge(-1); });
+  moreR.addEventListener("click", function () { nudge(1); });
+  bar.addEventListener("scroll", edges, {passive: true});
+  window.addEventListener("resize", edges);
+  window.addEventListener("load", edges);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(edges);
+  bar.addEventListener("wheel", function (e) {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    var max = bar.scrollWidth - bar.clientWidth;
+    if (max <= 0) return;
+    if ((e.deltaY < 0 && bar.scrollLeft <= 0) || (e.deltaY > 0 && bar.scrollLeft >= max)) return;
+    bar.scrollLeft = Math.max(0, Math.min(max, bar.scrollLeft + e.deltaY));
+    e.preventDefault();
+  }, {passive: false});
   function show(id, scroll) {
-    if (!document.getElementById(id)) id = "tab-overview";
-    panels.forEach(function (p) { p.hidden = p.id !== id; });
+    if (!document.getElementById("p-" + id)) id = "tab-overview";
+    panels.forEach(function (p) { p.hidden = p.id !== "p-" + id; });
     tabs.forEach(function (a) {
-      if (a.getAttribute("href") === "#" + id) a.setAttribute("aria-current", "page");
-      else a.removeAttribute("aria-current");
+      if (a.getAttribute("href") === "#" + id) {
+        a.setAttribute("aria-current", "page");
+        reveal(a, scroll);
+      } else a.removeAttribute("aria-current");
     });
     if (scroll) window.scrollTo(0, 0);
+    edges();
   }
   document.addEventListener("click", function (e) {
     var a = e.target.closest('a[href^="#tab-"]');
@@ -816,15 +861,17 @@ def font_face():
 def render(c, news_data=None, show_news=True, demo=False):
     topics = c["topics"]
     tabs = ['<a href="#tab-overview" aria-current="page">Overview</a>']
-    panels = ['<section class="panel" id="tab-overview">%s</section>' % overview_html(c, demo)]
+    # Panel ids carry a "p-" the tab links don't, so a "#tab-x" address
+    # never matches an element and the browser can't jump past the tab bar.
+    panels = ['<section class="panel" id="p-tab-overview">%s</section>' % overview_html(c, demo)]
     for t in topics:
         tabs.append('<a href="#tab-%s">%s</a>' % (esc(t["slug"]), esc(t["title"])))
-        panels.append('<section class="panel" id="tab-%s">%s</section>' % (esc(t["slug"]), topic_html(t)))
+        panels.append('<section class="panel" id="p-tab-%s">%s</section>' % (esc(t["slug"]), topic_html(t)))
     extra_css = ""
     if news is not None and show_news:
         n = news.panel(news_data)
         tabs.append('<a href="#tab-news">News</a>')
-        panels.append('<section class="panel" id="tab-news">%s</section>' % n["html"])
+        panels.append('<section class="panel" id="p-tab-news">%s</section>' % n["html"])
         extra_css = n["css"]
     return """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
@@ -833,7 +880,11 @@ def render(c, news_data=None, show_news=True, demo=False):
 <title>Study Engine</title>
 <style>%s%s%s</style></head>
 <body><div class="app">
+<div class="tabwrap">
+<button class="more left" type="button" aria-label="Scroll tabs left" hidden><span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2 4 7l5 5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
 <nav class="tabs" aria-label="Sections">%s</nav>
+<button class="more right" type="button" aria-label="Scroll tabs right" hidden><span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+</div>
 %s
 </div>
 %s

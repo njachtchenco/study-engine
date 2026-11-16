@@ -1,0 +1,80 @@
+{
+  "m01": {
+    "id": "m01",
+    "title": "Greetings, politeness and numbers",
+    "depends_on": [],
+    "status": "unaided_pass",
+    "attempts": 2,
+    "last_score": 0.9,
+    "explained_at": null,
+    "unaided_pass_at": "2026-10-30",
+    "notes": "Usted against tú; prices with 'con' for the cents"
+  },
+  "m02": {
+    "id": "m02",
+    "title": "Ordering food and drink",
+    "depends_on": [
+      "m01"
+    ],
+    "status": "unaided_pass",
+    "attempts": 3,
+    "last_score": 0.8,
+    "explained_at": "2026-11-02",
+    "unaided_pass_at": "2026-11-05",
+    "notes": "Translating 'can I have' word for word instead of 'me pone'"
+  },
+  "m03": {
+    "id": "m03",
+    "title": "Asking for and following directions",
+    "depends_on": [
+      "m01"
+    ],
+    "status": "redo_due",
+    "attempts": 2,
+    "last_score": 0.4,
+    "explained_at": "2026-11-09",
+    "unaided_pass_at": null,
+    "notes": "'Derecho' (straight on) against 'a la derecha' (to the right)"
+  },
+  "m04": {
+    "id": "m04",
+    "title": "Hotel check-in and fixing problems",
+    "depends_on": [
+      "m01",
+      "m02"
+    ],
+    "status": "attempting",
+    "attempts": 1,
+    "last_score": 0.6,
+    "explained_at": null,
+    "unaided_pass_at": null,
+    "notes": "Describing what's broken: 'no funciona' and the nouns around it"
+  },
+  "m05": {
+    "id": "m05",
+    "title": "Small talk in the past tense",
+    "depends_on": [
+      "m02"
+    ],
+    "status": "untouched",
+    "attempts": 0,
+    "last_score": null,
+    "explained_at": null,
+    "unaided_pass_at": null,
+    "notes": "Preterite against imperfect; most people use one for everything"
+  },
+  "m06": {
+    "id": "m06",
+    "title": "Listening at native speed",
+    "depends_on": [
+      "m03",
+      "m04"
+    ],
+    "status": "untouched",
+    "attempts": 0,
+    "last_score": null,
+    "explained_at": null,
+    "unaided_pass_at": null,
+    "notes": "Waiting to understand every word instead of catching the key ones"
+  }
+}

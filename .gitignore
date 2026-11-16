@@ -1,0 +1,14 @@
+# Generated pages, rebuilt from topics/ in under a second
+view/dashboard.html
+view/demo.html
+
+# Python
+__pycache__/
+*.pyc
+
+# Recordings and transcripts you may not have the right to publish
+# (many schools allow lecture recordings for personal use only)
+topics/*/transcripts/
+
+# Scratch
+.scratch/

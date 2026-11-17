@@ -136,6 +136,14 @@ The spar checks, watched 2026-11-15:
 All four kit checks rewatched 2026-11-15 after the Chunky redesign moved the news into
 `news.panel()` and rebuilt the page.
 
+All five dashboard checks (the four kit checks plus 'a diagnosis does not
+move "You're on"') rewatched 2026-11-16 after the desk restyle. One had gone
+hollow: "dashboard reports the override count" looked for a bare `>1<`, and the
+new chapter detail panel prints `<dd>1</dd>` for one attempt, so it stayed
+green with `overrides = 0`. It now looks for the override figure itself. After
+any change to the page's markup, disarm these again; a substring check on HTML
+can start matching something else without failing.
+
 Do this for any new check before trusting it. An assertion nobody has watched
 fail is not coverage, it reads as coverage, which is worse than none.
 

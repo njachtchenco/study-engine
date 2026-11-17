@@ -17,6 +17,15 @@ no tab and both flags do nothing.
 --demo renders the made-up topic in examples/demo to view/demo.html instead,
 dated as if today were the day after its last session, so someone can see the
 page before they have studied anything.
+
+The look (16 Nov 2026): a study desk. Warm greys with one amber accent, a
+sidebar that becomes a top bar on a phone, the next step drawn as a real index
+card (the one bright thing on the overview), and the chapter map as the only
+place several colours mean something. Slash commands are set as small mono
+chips, because every action here happens in Claude Code.
+
+Restyle method: unslop by Damir Sokolovsky (@heydamir), CC BY 4.0,
+https://github.com/heydamir/unslop
 """
 
 import argparse
@@ -40,7 +49,7 @@ except ImportError:
 
 OUT = os.path.join(store.ROOT, "view", "dashboard.html")
 DEMO_ROOT = os.path.join(os.path.dirname(HERE), "examples", "demo")
-FONT = os.path.join(HERE, "fonts", "Nunito-latin.woff2")
+FONT = os.path.join(HERE, "fonts", "Figtree-latin.woff2")
 
 STATUS_LABEL = {
     "untouched": "Not started",
@@ -280,10 +289,10 @@ def spark_state(c):
         passed = [(t, k) for t in c["topics"] for k in t["passed_today"]]
         if passed:
             t, k = passed[0]
-            return "celebrating", "%s passed unaided!" % short_title(t["mods"][k]["title"])
+            return "celebrating", "%s passed unaided." % short_title(t["mods"][k]["title"])
         if streak in MILESTONES:
-            tail = " A new best!" if streak >= best and streak > 3 else ""
-            return "celebrating", "%d-day streak!%s" % (streak, tail)
+            tail = " A new best." if streak >= best and streak > 3 else ""
+            return "celebrating", "%d-day streak.%s" % (streak, tail)
         if due == 0 and sum(t["reviewed_today"] for t in c["topics"]):
             return "celebrating", "Every due card cleared."
         if yesterday not in c["prod_days"] and earlier:
@@ -306,26 +315,42 @@ def spark_state(c):
 # --------------------------------------------------------------------------
 # Render.
 
+# Lucide-style line icons on a 24 grid, drawn at 18px with a 2 stroke.
 ICON = {
-    "cards": "M5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"
-             "M8 7V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2",
-    "target": "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM12 11.5v1",
-    "redo": "M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4",
-    "check": "M5 12.5l4.5 4.5L19 7.5",
-    "chevron": "M6 9l6 6 6-6",
+    "overview": '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/>'
+                '<rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+    "book": '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+    "news": '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9'
+            'c0-1.1.9-2 2-2h2M18 14h-8M15 18h-5M10 6h8v4h-8z"/>',
+    "cards": '<path d="M5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z'
+             'M8 7V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/>',
+    "target": '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    "copy": '<rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/>',
+    "check": '<path d="M20 6 9 17l-5-5"/>',
+    "arrow": '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    "left": '<path d="m15 18-6-6 6-6"/>',
+    "right": '<path d="m9 18 6-6-6-6"/>',
 }
-FLAME = ("M12 2.5c.6 3.2 3.2 4.9 4.6 7.3 1 1.7 1.4 3.4 1.4 4.7a6 6 0 0 1-12 0c0-2.1.9-3.9 "
-         "2.3-5.2.1 1.6.9 2.9 2.1 3.3-.4-3.6.4-7.1 1.6-10.1z")
 
 
-def icon(name, cls="ic", size=26, stroke=2.2):
-    return ('<svg class="%s" width="%d" height="%d" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="%s" stroke-linecap="round" '
-            'stroke-linejoin="round" aria-hidden="true"><path d="%s"/></svg>'
-            % (cls, size, size, stroke, ICON[name]))
+def icon(name, size=18, cls="ic"):
+    return ('<svg class="%s" width="%d" height="%d" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">%s</svg>'
+            % (cls, size, size, ICON[name]))
+
+
+def cmd_chip(cmd):
+    return '<code class="cmd">%s</code>' % esc(cmd)
+
+
+def date_text(d, pattern):
+    """strftime, with {d} for the day of the month without a leading zero.
+    "%-d" does that on macOS and Linux but not on Windows."""
+    return d.strftime(pattern).replace("{d}", str(d.day))
 
 
 def spark_svg(mood, size):
+    """Spark in amber, the colour the streak uses."""
     def star(x, y, s):
         a, b = 1.4 * s, 2.6 * s
         return ("M%g %gl%g %g %g %g-%g %g-%g %g-%g-%g-%g-%g %g-%gz"
@@ -336,7 +361,7 @@ def spark_svg(mood, size):
         "waiting": dict(px1=34, px2=56, py=51),
         "proud": dict(wr=0, pr=0, lids="M24 51q7-7 14 0M46 51q7-7 14 0", blush=5,
                       mouth="M33 58q9 9 18 0", sparks=star(72, 22, 1)),
-        "celebrating": dict(wr=9, pr=4.5, py=48, blush=5, mouth="M34 58q8 12 16 0z", mfill="#1e1a33",
+        "celebrating": dict(wr=9, pr=4.5, py=48, blush=5, mouth="M34 58q8 12 16 0z", mfill="#1f1b16",
                             arms="M14 42c-7-8-6-17 1-18s7 10 5 19zM70 42c7-8 6-17-1-18s-7 10-5 19z",
                             sparks=star(10, 16, 1.2) + star(74, 10, 1) + star(78, 32, .8) + star(6, 36, .7)),
         "resting": dict(wr=0, pr=0, lids="M24 51q7 4 14 0M46 51q7 4 14 0", mouth="M39 61h6",
@@ -344,28 +369,28 @@ def spark_svg(mood, size):
         "comeback": dict(arms="M71 46c7-6 9-15 2-17s-9 9-7 19z", mouth="M35 59q7 6 14 0"),
     }.get(mood, {}))
     p = ['<svg class="spark" width="%d" height="%d" viewBox="0 0 84 84" aria-hidden="true">' % (size, size),
-         '<ellipse cx="42" cy="81" rx="22" ry="2.5" fill="rgba(0,0,0,.22)"/>']
+         '<ellipse cx="42" cy="81" rx="22" ry="2.5" fill="rgba(0,0,0,.18)"/>']
     if g["arms"]:
-        p.append('<path d="%s" fill="#6a4de0"/>' % g["arms"])
-    p.append('<path d="M42 6l3.2 7 7.6.6-5.8 4.9 1.8 7.4-6.8-4-6.8 4 1.8-7.4-5.8-4.9 7.6-.6z" fill="#ffb938"/>'
-             '<ellipse cx="42" cy="54" rx="30" ry="26" fill="#8b6cff"/>'
-             '<ellipse cx="42" cy="62" rx="17" ry="12" fill="#c9bcff"/>')
+        p.append('<path d="%s" fill="#c9831f"/>' % g["arms"])
+    p.append('<path d="M42 6l3.2 7 7.6.6-5.8 4.9 1.8 7.4-6.8-4-6.8 4 1.8-7.4-5.8-4.9 7.6-.6z" fill="#c9831f"/>'
+             '<ellipse cx="42" cy="54" rx="30" ry="26" fill="#f0a53a"/>'
+             '<ellipse cx="42" cy="62" rx="17" ry="12" fill="#f8d49a"/>')
     if g["wr"]:
         p.append('<circle cx="%g" cy="49" r="%g" fill="#fff"/><circle cx="%g" cy="49" r="%g" fill="#fff"/>'
                  % (g["wx1"], g["wr"], g["wx2"], g["wr"]))
-        p.append('<circle cx="%g" cy="%g" r="%g" fill="#1e1a33"/><circle cx="%g" cy="%g" r="%g" fill="#1e1a33"/>'
+        p.append('<circle cx="%g" cy="%g" r="%g" fill="#1f1b16"/><circle cx="%g" cy="%g" r="%g" fill="#1f1b16"/>'
                  % (g["px1"], g["py"], g["pr"], g["px2"], g["py"], g["pr"]))
     if g["lids"]:
-        p.append('<path d="%s" fill="none" stroke="#1e1a33" stroke-width="3" stroke-linecap="round"/>' % g["lids"])
+        p.append('<path d="%s" fill="none" stroke="#1f1b16" stroke-width="3" stroke-linecap="round"/>' % g["lids"])
     if g["blush"]:
-        p.append('<ellipse cx="23" cy="59" rx="5" ry="3" fill="#ff9fb2" opacity=".85"/>'
-                 '<ellipse cx="61" cy="59" rx="5" ry="3" fill="#ff9fb2" opacity=".85"/>')
-    p.append('<path d="%s" fill="%s" stroke="#1e1a33" stroke-width="2.6" stroke-linecap="round" '
+        p.append('<ellipse cx="23" cy="59" rx="5" ry="3" fill="#e98a6a" opacity=".85"/>'
+                 '<ellipse cx="61" cy="59" rx="5" ry="3" fill="#e98a6a" opacity=".85"/>')
+    p.append('<path d="%s" fill="%s" stroke="#1f1b16" stroke-width="2.6" stroke-linecap="round" '
              'stroke-linejoin="round"/>' % (g["mouth"], g["mfill"]))
     if g["sparks"]:
-        p.append('<path d="%s" fill="#ffb938"/>' % g["sparks"])
+        p.append('<path d="%s" fill="#c9831f"/>' % g["sparks"])
     if g["zz"]:
-        p.append('<path d="%s" fill="none" stroke="#a9a4cf" stroke-width="2.2" stroke-linecap="round" '
+        p.append('<path d="%s" fill="none" stroke="#8a847a" stroke-width="2.2" stroke-linecap="round" '
                  'stroke-linejoin="round"/>' % g["zz"])
     p.append("</svg>")
     return "".join(p)
@@ -388,47 +413,30 @@ def node_kind(t, k):
     return "doing"
 
 
-def node_html(t, k, big=False, tag="div", extra=""):
-    """(the YOU tag or "", the ring). The tag sits outside the ring so the
-    caller decides where it hangs."""
+def node(t, k, size, tag="div", extra=""):
+    """One chapter as a ring: the arc is the last score."""
     m = t["mods"][k]
     kind = node_kind(t, k)
-    score = m.get("last_score")
-    deg = 0 if score is None or kind == "new" else int(round(score * 360))
-    inner = "" if kind == "new" else (pct(score) or "&ndash;")
-    you = '<span class="you">YOU</span>' if k == t["current"] else ""
-    return you, ('<%s class="ring %s%s" style="--deg:%ddeg"%s><span class="face">%s</span></%s>'
-                 % (tag, kind, " big" if big else "", deg, extra, inner, tag))
+    s = m.get("last_score")
+    deg = 0 if s is None or kind == "new" else int(round(s * 360))
+    inner = "" if kind == "new" else (pct(s) or "–")
+    return ('<%s class="node %s" style="--deg:%ddeg;--n:%dpx"%s><span>%s</span></%s>'
+            % (tag, kind, deg, size, extra, inner, tag))
 
 
-def overview_topic(t):
-    if not t["mods"]:
-        body = '<p class="muted">No chapters yet. Run <code>/map</code> to lay out this subject.</p>'
-    else:
-        nodes = []
-        for k in t["chain"]:
-            you, ring = node_html(t, k, big=(k == t["current"]))
-            nodes.append('<div class="pnode">%s<div class="rwrap">%s</div><span class="plabel%s">%s</span></div>' % (
-                you, ring, " here" if k == t["current"] else "", esc(t["labels"][k])))
-        nodes = "".join(nodes)
-        cur = t["mods"][t["current"]]["title"] if t["current"] else ""
-        body = ('<p class="muted meta">%d of %d started &middot; %s due</p>'
-                '<div class="path">%s</div>'
-                '<div class="pfoot"><span>You’re on %s.</span>'
-                '<a class="key small" href="#tab-%s">Full map</a></div>'
-                % (t["started"], len(t["mods"]), plural(t["due"], "card"), nodes,
-                   esc(short_title(cur)), esc(t["slug"])))
-    return ('<details class="topic"><summary><span>%s</span>%s</summary>'
-            '<div class="tbody">%s</div></details>' % (esc(t["title"]), icon("chevron", "chev", 22, 2.6), body))
+# --------------------------------------------------------------------------
+# Overview
 
-
-def do_next(c):
+def next_step(c):
+    """The one thing to do next: (command, headline, subline)."""
     topics = c["topics"]
+    if not topics:
+        return "/interview", "Start a subject", 'For example: /interview "Spanish for travel"'
     for t in topics:
         if t["owed"]:
             k = t["owed"][0]
-            return ("redo", "/explain", "<code>/explain</code> &middot; redo first",
-                    "%s, from scratch with no help" % esc(short_title(t["mods"][k]["title"])))
+            return ("/explain", "Redo %s from scratch" % short_title(t["mods"][k]["title"]),
+                    "No notes and no help. Nothing new starts until the redo passes")
     due = sum(t["due"] for t in topics)
     if due:
         overdue = sum(t["overdue"] for t in topics)
@@ -436,99 +444,114 @@ def do_next(c):
         bits = ["%d overdue" % overdue if overdue else "%d due today" % due]
         if tomorrow:
             bits.append("%d more tomorrow" % tomorrow)
-        return ("cards", "/review", "<code>/review</code> &middot; %s first" % plural(due, "card"),
-                " &middot; ".join(bits))
+        return "/review", "Review %s" % plural(due, "due card"), " · ".join(bits)
     if not any(t["mods"] for t in topics):
-        return ("target", "/map", "<code>/map</code> &middot; plan the chapters",
-                "Turn the subject into an ordered list of parts.")
+        return "/map", "Plan the chapters", "Turn the subject into an ordered list of parts"
     cur = next((t for t in topics if t["current"]), None)
     tomorrow = sum(t["tomorrow"] for t in topics)
-    tail = "You’re on %s." % esc(short_title(cur["mods"][cur["current"]]["title"])) if cur else ""
     lead = "Nothing due" + (", %d tomorrow." % tomorrow if tomorrow else ".")
-    return ("target", "/socratic", "<code>/socratic</code> &middot; keep going", "%s %s" % (lead, tail))
+    tail = " You’re on %s." % short_title(cur["mods"][cur["current"]]["title"]) if cur else ""
+    return "/socratic", "Keep going", lead + tail
 
 
-def go_button(kind, cmd, l1, l2):
-    """The one big action. Its command runs in Claude Code, not here, so a tap
-    copies it, ready to paste."""
-    return ('<button class="go" type="button" data-copy="%s" aria-label="Copy %s">%s'
-            '<span><b>%s</b><small data-say="%s">%s</small></span></button>'
-            % (esc(cmd), esc(cmd), icon(kind, "ic", 30), l1,
-               esc("Copied %s. Paste it into Claude Code." % cmd), l2))
+def index_card(c):
+    """The next step, drawn as an index card: the one bright thing on the
+    overview. Its command runs in Claude Code, not here, so the button copies
+    it, ready to paste."""
+    cmd, head, sub = next_step(c)
+    return ('<section class="icard" aria-label="Next step">'
+            '<div class="icard-top"><span class="icard-label">Next</span>%s</div>'
+            '<div class="icard-body"><h2>%s</h2><p>%s</p></div>'
+            '<button class="copy" type="button" data-copy="%s" data-say="Copied. Paste it into Claude Code">'
+            '%s<span>Copy %s</span></button></section>'
+            % (cmd_chip(cmd), esc(head), esc(sub), esc(cmd), icon("copy", 16), esc(cmd)))
+
+
+def subject_card(t):
+    if not t["mods"]:
+        body = '<p class="muted">No chapters yet. Run %s to lay out this subject</p>' % cmd_chip("/map")
+    else:
+        steps = []
+        for k in t["chain"]:
+            here = k == t["current"]
+            steps.append('<li class="%s">%s<span class="plabel">%s</span></li>'
+                         % ("here" if here else "", node(t, k, 44), esc(t["labels"][k])))
+        cur = short_title(t["mods"][t["current"]]["title"]) if t["current"] else ""
+        body = ('<ol class="path">%s</ol>'
+                '<p class="on">You’re on <b>%s</b></p>' % ("".join(steps), esc(cur)))
+    return ('<section class="card subject"><div class="card-head"><div><h2>%s</h2>'
+            '<p class="meta">%d of %d started · %s due</p></div>'
+            '<a class="link" href="#tab-%s">Open map %s</a></div>%s</section>'
+            % (esc(t["title"]), t["started"], len(t["mods"]), plural(t["due"], "card"),
+               esc(t["slug"]), icon("arrow", 16), body))
 
 
 def overview_html(c, demo):
     topics, today = c["topics"], c["today"]
-    demo_note = ('<div class="demo-note"><b>Sample data.</b> A made-up topic so you can see the '
-                 'dashboard before you have studied anything. Your own topics show up in '
-                 '<code>view/dashboard.html</code> after <code>/interview</code>.</div>') if demo else ""
+    demo_note = ('<p class="note"><b>Sample data</b> A made-up topic so you can see the dashboard before '
+                 'you have studied anything. Your own topics appear after %s</p>'
+                 % cmd_chip("/interview")) if demo else ""
+    head = '<header class="phead"><h1>%s</h1></header>' % date_text(today, "%A {d} %B")
     if not topics:
-        return demo_note + (
-            '<div class="hello">%s<p class="bubble">Hi, I’m Spark. Start a subject and I’ll keep score.</p></div>'
-            '%s'
-            '<p class="muted center">Once you have a topic, your streak, today’s quests and '
-            'where you are in each subject appear here.</p>'
-            % (spark_svg("waiting", 100),
-               go_button("target", "/interview", "<code>/interview</code> &middot; start a subject",
-                         "For example: /interview &quot;Spanish for travel&quot;")))
+        return (head + demo_note +
+                '<div class="hello">%s<p>Hi, I’m Spark. Start a subject and I’ll keep score.</p></div>'
+                % spark_svg("waiting", 56) +
+                '<div class="ov"><div class="ov-main">%s</div></div>' % index_card(c))
 
     mood, line = spark_state(c)
-    streak, best, studied = streaks(c["prod_days"], today)
-    keys = []
+    streak, best, _ = streaks(c["prod_days"], today)
+    days = []
     for d in week(c["prod_days"], today):
-        inner = ""
-        if d["state"] == "done":
-            inner = icon("check", "tick", 20, 3)
-        elif d["state"] == "today":
-            inner = ('<svg class="flame" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">'
-                     '<path d="%s"/></svg>' % FLAME)
-        keys.append('<div class="day"><div class="dkey %s" title="%s">%s</div><span>%s</span></div>' % (
-            d["state"], d["date"].strftime("%a %d %b"), inner, d["letter"]))
+        inner = icon("check", 14) if d["state"] == "done" else ""
+        days.append('<li class="%s" title="%s"><i>%s</i><span>%s</span></li>'
+                    % (d["state"], date_text(d["date"], "%a {d} %b"), inner, d["letter"]))
 
     due = sum(t["due"] for t in topics)
     reviewed = sum(t["reviewed_today"] for t in topics)
     total = due + reviewed
     t_iso = today.isoformat()
     unaided = any(s["at"][:10] == t_iso and s["role"] in UNAIDED_ROLES for s in c["sessions"])
-    quests = []
+    rows = []
     if total:
-        quests.append(("cards", "mint", "Review the %s" % plural(total, "due card"),
-                       "Done" if reviewed >= total else "%d / %d" % (reviewed, total), reviewed / float(total)))
+        rows.append(("cards", "Due cards reviewed", "%d of %d" % (reviewed, total), reviewed / float(total)))
     else:
-        quests.append(("cards", "mint", "No cards due today", "Done", 1.0))
-    quests.append(("target", "violet", "One unaided attempt", "Done" if unaided else "0 / 1", 1.0 if unaided else 0.0))
-    quest_html = "".join(
-        '<div class="quest q-%s">%s<div class="qbody"><div class="qrow"><span>%s</span>'
-        '<span class="muted num">%s</span></div><div class="bar"><i style="width:%d%%"></i></div></div></div>'
-        % (color, icon(ic), esc(label), esc(count), round(frac * 100))
-        for ic, color, label, count, frac in quests)
+        rows.append(("cards", "No cards due today", "Done", 1.0))
+    rows.append(("target", "One unaided attempt", "Done" if unaided else "0 of 1", 1.0 if unaided else 0.0))
+    today_rows = "".join(
+        '<li>%s<div><div class="trow"><span>%s</span><span class="fig">%s</span></div>'
+        '<div class="bar%s"><i style="width:%d%%"></i></div></div></li>'
+        % (icon(ic), esc(label), esc(count), " full" if frac >= 1 else "", round(frac * 100))
+        for ic, label, count, frac in rows)
 
-    kind, cmd, l1, l2 = do_next(c)
     overrides = sum(t["overrides"] for t in topics)
-    return (
-        demo_note +
-        '<div class="hello">%s<p class="bubble">%s</p></div>' % (spark_svg(mood, 100), esc(line)) +
-        '<section class="card"><div class="row"><h2 class="streak"><span>%d</span> day streak</h2>'
-        '<span class="muted">Best %d</span></div><div class="week">%s</div></section>'
-        % (streak, best, "".join(keys)) +
-        '<section class="card"><h2 class="h3">Today’s quests</h2>%s</section>' % quest_html +
-        go_button(kind, cmd, l1, l2) +
-        "".join(overview_topic(t) for t in topics) +
-        '<p class="foot">Gate overrides on record: <b>%d</b> &middot; Rebuilt %s</p>'
-        % (overrides, datetime.datetime.now().strftime("%d %b, %H:%M"))
-    )
+    side = ('<section class="card"><p class="label">Streak</p>'
+            '<p class="figure">%s</p><p class="meta">Best %d</p>'
+            '<ol class="week">%s</ol></section>'
+            '<section class="card"><p class="label">Gate overrides on record</p>'
+            '<p class="figure">%d</p><p class="meta">Each one is a shortcut past the struggle, logged with its reason</p></section>'
+            % (plural(streak, "day"), best, "".join(days), overrides))
+    main = (index_card(c) +
+            '<section class="card"><h2>Today</h2><ul class="today">%s</ul></section>' % today_rows +
+            "".join(subject_card(t) for t in topics))
+    return (head + demo_note +
+            '<div class="hello">%s<p>%s</p></div>' % (spark_svg(mood, 56), esc(line)) +
+            '<div class="ov"><div class="ov-main">%s</div><aside class="ov-side">%s</aside></div>' % (main, side))
 
+
+# --------------------------------------------------------------------------
+# One topic
 
 def topic_html(t):
     mods = t["mods"]
-    level = ('<span class="lv" title="Level: how long this topic’s cards stay remembered, '
-             'on average. It only rises when cards stick.">LV %d</span>' % t["level"]) if t["level"] is not None else ""
-    head = ('<div class="thead"><div><h1>%s</h1><p class="muted">%d of %d started &middot; %s due'
-            ' &middot; %s</p></div>%s</div>' % (
-                esc(t["title"]), t["started"], len(mods), plural(t["due"], "card"),
-                plural(t["overrides"], "gate override"), level))
+    level = ('<div class="level" title="How long this topic’s cards stay remembered, on average. '
+             'It only rises when cards stick."><p class="label">Level</p><p class="figure">%d</p></div>'
+             % t["level"]) if t["level"] is not None else ""
+    head = ('<header class="phead topic-head"><div><h1>%s</h1><p class="meta">%d of %d started · %s due · %s</p></div>%s</header>'
+            % (esc(t["title"]), t["started"], len(mods), plural(t["due"], "card"),
+               plural(t["overrides"], "gate override"), level))
     if not mods:
-        return head + '<section class="card"><p class="muted">No chapters yet. Run <code>/map</code> to lay out this subject.</p></section>'
+        return head + ('<section class="card"><p class="muted">No chapters yet. Run %s to lay out this subject</p></section>'
+                       % cmd_chip("/map"))
     L = t["layout"]
     S = L["S"]
     edges = []
@@ -543,204 +566,284 @@ def topic_html(t):
         x, y = L["pos"][k]
         m = mods[k]
         lab = t["labels"][k]
-        aria = "%s, %s, %s%s" % (lab, short_title(m["title"]), STATUS_LABEL.get(m["status"], m["status"]),
+        status = STATUS_LABEL.get(m["status"], m["status"])
+        aria = "%s, %s, %s%s" % (lab, short_title(m["title"]), status,
                                  ", last score " + pct(m.get("last_score")) if m.get("last_score") is not None else "")
-        you, ring = node_html(t, k, tag="button",
-                              extra=' type="button" data-mod="%s" aria-label="%s"' % (esc(k), esc(aria)))
-        nodes.append('<div class="mnode" style="left:%.1fpx;top:%.1fpx">%s%s<span class="plabel%s">%s</span></div>' % (
-            x, y, you, ring, " here" if k == t["current"] else "", esc(lab)))
+        here = k == t["current"]
+        nodes.append('<div class="mnode%s" style="left:%.1fpx;top:%.1fpx">%s<span class="plabel">%s</span>%s</div>' % (
+            " here" if here else "", x, y,
+            node(t, k, 48, tag="button", extra=' type="button" data-mod="%s" aria-label="%s"' % (esc(k), esc(aria))),
+            esc(lab), '<span class="you">You</span>' if here else ""))
         needs = [t["labels"][a] for a, b in t["edges"] if b == k]
         unlocks = [t["labels"][b] for a, b in t["edges"] if a == k]
-        meta = [STATUS_LABEL.get(m["status"], m["status"])]
+        facts = [("Status", status)]
         if m.get("attempts"):
-            meta.append(plural(m["attempts"], "attempt"))
+            facts.append(("Attempts", str(m["attempts"])))
         if m.get("last_score") is not None:
-            meta.append("last score " + pct(m["last_score"]))
-        links = (esc("Needs " + ", ".join(needs)) if needs else "A starting point") + \
-            (" &middot; Unlocks " + esc(", ".join(unlocks)) if unlocks else "")
-        shown = k == t["current"] or (t["current"] is None and k == t["order"][0])
+            facts.append(("Last score", pct(m["last_score"])))
+        facts.append(("Needs", ", ".join(needs) if needs else "Nothing, a starting point"))
+        if unlocks:
+            facts.append(("Unlocks", ", ".join(unlocks)))
+        shown = here or (t["current"] is None and k == t["order"][0])
         details.append(
-            '<div class="detail" data-detail="%s"%s><div class="row"><h2 class="h3">%s &middot; %s</h2>%s</div>'
-            '<p class="muted">%s</p><p class="muted small">%s</p></div>' % (
-                esc(k), "" if shown else " hidden", esc(lab), esc(short_title(m["title"])),
-                '<span class="you inline">YOU</span>' if k == t["current"] else "",
-                esc(" · ".join(meta)), links))
-    rows = "".join(
-        "<tr><td>%s</td><td>%s</td><td>%s</td><td class=\"num\">%s</td></tr>" % (
-            esc(day(s["at"]).strftime("%d %b")), esc(s["role"]),
-            esc(t["labels"].get(s.get("module"), "")),
-            ("override" if s.get("override") else pct(s.get("score"))))
-        for s in t["sessions"][:12])
-    table = ('<details class="log"><summary>%s logged</summary><table><tr><th>When</th><th>Role</th>'
-             '<th>Part</th><th class="num">Score</th></tr>%s</table></details>'
-             % (plural(len(t["sessions"]), "session"), rows)) if t["sessions"] else ""
+            '<div class="detail" data-detail="%s"%s><p class="label">%s%s</p><h2>%s</h2><dl>%s</dl></div>' % (
+                esc(k), "" if shown else " hidden", esc(lab),
+                ' <span class="you inline">You’re on this one</span>' if here else "",
+                esc(short_title(m["title"])),
+                "".join("<div><dt>%s</dt><dd>%s</dd></div>" % (esc(a), esc(b)) for a, b in facts)))
+    log = ""
+    if t["sessions"]:
+        rows = "".join(
+            "<tr><td>%s</td><td>%s</td><td>%s</td><td class=\"fig\">%s</td></tr>" % (
+                esc(date_text(day(s["at"]), "{d} %b")), esc(s["role"].capitalize()),
+                esc(t["labels"].get(s.get("module"), "")),
+                ("Override" if s.get("override") else pct(s.get("score"))))
+            for s in t["sessions"][:12])
+        log = ('<section class="card log"><div class="card-head"><h2>Recent sessions</h2>'
+               '<span class="meta">%s logged</span></div><table><thead><tr><th>Date</th><th>Role</th><th>Part</th>'
+               '<th class="fig">Score</th></tr></thead><tbody>%s</tbody></table></section>'
+               % (plural(len(t["sessions"]), "session"), rows))
+    legend = ('<ul class="legend"><li><i class="lg passed"></i>Passed unaided</li><li><i class="lg doing"></i>In progress</li>'
+              '<li><i class="lg owed"></i>Redo owed</li><li><i class="lg new"></i>Not started</li></ul>')
     return (head +
-            '<section class="card mapcard"><div class="mapscroll"><div class="map" style="width:%dpx;height:%dpx">'
-            '<svg class="edges" width="%d" height="%d" viewBox="0 0 %d %d" aria-hidden="true">%s</svg>%s</div></div>'
-            '<div class="legend"><span><i class="lg passed"></i>Passed unaided</span><span><i class="lg doing"></i>In progress</span>'
-            '<span><i class="lg owed"></i>Redo owed</span><span><i class="lg new"></i>Not started</span></div></section>'
-            % (L["W"], L["H"], L["W"], L["H"], L["W"], L["H"], "".join(edges), "".join(nodes)) +
-            '<section class="card details">%s</section>%s' % ("".join(details), table))
+            '<div class="tgrid"><section class="card mapcard"><div class="card-head"><h2>Chapter map</h2>%s</div>'
+            '<div class="mapscroll"><div class="map" style="width:%dpx;height:%dpx">'
+            '<svg class="edges" width="%d" height="%d" viewBox="0 0 %d %d" aria-hidden="true">%s</svg>%s</div></div></section>'
+            '<aside class="tside"><section class="card details">%s</section>%s</aside></div>'
+            % (legend, L["W"], L["H"], L["W"], L["H"], L["W"], L["H"], "".join(edges), "".join(nodes),
+               "".join(details), log))
 
+
+# --------------------------------------------------------------------------
+# Page. The News tab's rules live in news.py and are appended after these.
 
 CSS = """
 :root{
   color-scheme:dark;
-  --bg:#17142b;--surf:#221e3d;--track:#332e57;--line:rgba(255,255,255,.08);--ink:#f4f2ff;--muted:#aba6d1;
-  --violet:#6a4de0;--violet-lip:#4a32b0;--violet-soft:#8b6cff;--violet-text:#b9a8ff;
-  --mint:#2bd9a0;--mint-lip:#1a9c72;--mint-ink:#0f2e24;--sun:#ffb938;--sun-lip:#c98a12;--sun-ink:#3a2400;
-  --gold:#ffd23f;--gold-lip:#c79e10;--coral:#ff8a7a;--coral-lip:#c9584a;
-  --key:#2c2752;--key-lip:#100d22;--slot:#1d1a35;--card-shadow:none;
+  --deep:#12110f;--bg:#161513;--card:#1c1a18;--raised:#262421;
+  --line:rgba(239,233,222,.08);--line2:rgba(239,233,222,.14);
+  --ink:#efe9de;--ink2:#aaa398;--muted:#8a847a;
+  --accent:#f0a53a;--accent-ink:#1f1b16;--accent-text:#f0a53a;
+  --pos:#4cc38a;--neg:#e5484d;--neg-soft:#e98a6a;
+  --paper:#f6f0e2;--paper-ink:#1f1b16;--paper-ink2:#5e554a;--paper-rule:rgba(70,110,170,.16);--paper-red:#c8473f;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset;
+  --paper-shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.35);
+  --ease:cubic-bezier(.22,1,.36,1);
 }
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
   color-scheme:light;
-  --bg:#f7f5ff;--surf:#fff;--track:#ece9fa;--line:rgba(45,42,69,.08);--ink:#2d2a45;--muted:#625d82;
-  --violet-soft:#7c5cff;--violet-text:#5a3fd0;--mint-lip:#1fa57a;--sun-lip:#d69414;--gold:#ffc61a;--gold-lip:#cf9c00;
-  --key:#fff;--key-lip:#d9d4ef;--slot:#ece9fa;--card-shadow:0 1px 2px rgba(45,42,69,.06),0 6px 16px rgba(45,42,69,.07);
+  --deep:#f1ece3;--bg:#f7f4ee;--card:#fdfbf7;--raised:#efe9df;
+  --line:rgba(31,27,22,.08);--line2:rgba(31,27,22,.14);
+  --ink:#1f1b16;--ink2:#5e554a;--muted:#736a5e;
+  --accent:#e9992b;--accent-ink:#1f1b16;--accent-text:#8f5200;
+  --pos:#16a34a;--neg:#dc2626;--neg-soft:#d9694a;
+  --paper:#fffdf6;--shadow:0 1px 2px rgba(0,0,0,.05);
+  --paper-shadow:0 1px 2px rgba(31,27,22,.08),0 8px 24px rgba(31,27,22,.08);
 }}
 :root[data-theme="light"]{
   color-scheme:light;
-  --bg:#f7f5ff;--surf:#fff;--track:#ece9fa;--line:rgba(45,42,69,.08);--ink:#2d2a45;--muted:#625d82;
-  --violet-soft:#7c5cff;--violet-text:#5a3fd0;--mint-lip:#1fa57a;--sun-lip:#d69414;--gold:#ffc61a;--gold-lip:#cf9c00;
-  --key:#fff;--key-lip:#d9d4ef;--slot:#ece9fa;--card-shadow:0 1px 2px rgba(45,42,69,.06),0 6px 16px rgba(45,42,69,.07);
+  --deep:#f1ece3;--bg:#f7f4ee;--card:#fdfbf7;--raised:#efe9df;
+  --line:rgba(31,27,22,.08);--line2:rgba(31,27,22,.14);
+  --ink:#1f1b16;--ink2:#5e554a;--muted:#736a5e;
+  --accent:#e9992b;--accent-ink:#1f1b16;--accent-text:#8f5200;
+  --pos:#16a34a;--neg:#dc2626;--neg-soft:#d9694a;
+  --paper:#fffdf6;--shadow:0 1px 2px rgba(0,0,0,.05);
+  --paper-shadow:0 1px 2px rgba(31,27,22,.08),0 8px 24px rgba(31,27,22,.08);
 }
 *{box-sizing:border-box}
 html{background:var(--bg)}
 body{margin:0;background:var(--bg);color:var(--ink);
-  font:700 16px/1.4 Nunito,ui-rounded,"SF Pro Rounded",-apple-system,system-ui,"Segoe UI",sans-serif;
-  -webkit-font-smoothing:antialiased}
-::selection{background:#6a4de0;color:#fff}
-:focus-visible{outline:3px solid #ffb938;outline-offset:2px}
+  font:400 15px/22px Figtree,-apple-system,system-ui,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,p,ol,ul,dl,dd{margin:0;padding:0}
+ol,ul{list-style:none}
 a{color:inherit}
-code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.92em;font-weight:700}
-h1,h2,p{margin:0}
-.app{max-width:460px;margin:0 auto;padding:18px 16px 40px;display:flex;flex-direction:column;gap:16px}
+::selection{background:var(--accent);color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.ic{flex:none;color:var(--muted)}
 .muted{color:var(--muted)}
-.small{font-size:.86rem}
-.center{text-align:center}
-.num{font-variant-numeric:tabular-nums}
+.fig,.figure{font-variant-numeric:tabular-nums}
+.meta{font-size:13px;line-height:20px;color:var(--muted)}
+.label{font-size:13px;line-height:20px;color:var(--ink2)}
+code,.cmd{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px}
+.cmd{display:inline-block;padding:0 6px;line-height:22px;border-radius:6px;background:var(--raised);
+  box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);white-space:nowrap}
+
+/* Shell */
+.shell{display:grid;grid-template-columns:268px minmax(0,1fr);min-height:100vh}
+.side{background:var(--deep);border-right:1px solid var(--line);padding:20px 12px;display:flex;flex-direction:column;gap:24px;
+  position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px;font-size:16px;font-weight:600;line-height:24px}
+.mark{width:20px;height:16px;border-radius:3px;background:var(--paper);position:relative;flex:none}
+.mark::before{content:"";position:absolute;left:0;right:0;top:4px;height:1.5px;background:var(--paper-red)}
+.mark::after{content:"";position:absolute;left:3px;right:3px;top:9px;height:1px;background:var(--paper-rule);box-shadow:0 3px 0 var(--paper-rule)}
+.navlabel{font-size:12px;line-height:16px;color:var(--muted);padding:0 10px;margin-bottom:8px}
 .tabwrap{position:relative}
-.tabs{position:relative;display:flex;gap:8px;overflow-x:auto;padding:0 2px 6px;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.more{position:absolute;top:0;bottom:6px;z-index:1;width:56px;display:flex;align-items:center;padding:0;border:0;
-  cursor:pointer;color:var(--ink);font:inherit}
-.more[hidden]{display:none}
-.more.left{left:0;justify-content:flex-start;background:linear-gradient(90deg,var(--bg) 55%,transparent)}
-.more.right{right:0;justify-content:flex-end;background:linear-gradient(270deg,var(--bg) 55%,transparent)}
-.more span{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--key);
-  box-shadow:0 3px 0 var(--key-lip)}
-.more:active span{transform:translateY(3px);box-shadow:none}
-.tabs a{flex:none;font-size:15px;font-weight:700;padding:8px 14px;border-radius:12px;text-decoration:none;
-  background:var(--key);box-shadow:0 3px 0 var(--key-lip)}
-.tabs a[aria-current="page"]{background:var(--violet);color:#fff;box-shadow:none;transform:translateY(3px);font-weight:800}
-.panel{display:flex;flex-direction:column;gap:16px}
+.tabs{display:flex;flex-direction:column;gap:2px}
+.tabs a{display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;text-decoration:none;
+  color:var(--ink2);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:background-color .15s var(--ease),color .15s var(--ease)}
+.tabs a span{overflow:hidden;text-overflow:ellipsis}
+.tabs a:hover{background:var(--card);color:var(--ink)}
+.tabs a[aria-current="page"]{background:var(--raised);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 1px var(--line)}
+.tabs a[aria-current="page"] .ic{color:var(--ink)}
+.more{display:none}
+.side-foot{margin-top:auto;padding:0 10px;font-size:12px;line-height:16px;color:var(--muted)}
+.main{min-width:0;padding:32px 32px 64px}
+.panel{max-width:1160px;margin:0 auto;display:flex;flex-direction:column;gap:24px;animation:rise .4s var(--ease)}
 .panel[hidden]{display:none}
-.card{background:var(--surf);box-shadow:var(--card-shadow);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
-.row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.h3{font-size:18px;font-weight:900}
-.hello{display:flex;align-items:center;gap:12px}
-.spark{flex:none}
-.bubble{flex:1;background:var(--surf);box-shadow:var(--card-shadow);border-radius:18px;padding:14px 16px;font-size:18px;font-weight:800;line-height:1.3}
-.demo-note{background:var(--key);border-radius:14px;padding:12px 14px;font-size:.9rem;line-height:1.45}
-.demo-note b{color:var(--sun)}
-.streak{font-size:26px;font-weight:900;letter-spacing:-.5px}
-.streak span{color:var(--sun)}
-.week{display:flex;gap:6px;padding-bottom:6px}
-.day{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
-.day span{font-size:13px;font-weight:800;margin-top:6px;color:var(--muted)}
-.dkey{width:100%;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center}
-.dkey.done{background:var(--sun);color:var(--sun-ink);transform:translateY(6px);box-shadow:inset 0 3px 0 rgba(0,0,0,.14)}
-.dkey.miss{background:var(--slot);transform:translateY(6px);box-shadow:inset 0 2px 0 rgba(0,0,0,.25)}
-.dkey.blank{background:transparent;border:2px dashed var(--track);transform:translateY(6px)}
-.dkey.today{background:var(--key);border:2.5px solid var(--sun);box-shadow:0 6px 0 var(--key-lip)}
-.dkey.today+span{color:var(--sun)}
-.flame path{fill:none;stroke:var(--sun);stroke-width:2.2;stroke-linejoin:round}
-.quest{display:flex;align-items:center;gap:12px}
-.quest .ic{flex:none}
-.q-mint .ic{color:var(--mint)} .q-mint .bar i{background:var(--mint)}
-.q-violet .ic{color:var(--violet-soft)} .q-violet .bar i{background:var(--violet-soft)}
-.qbody{flex:1;display:flex;flex-direction:column;gap:6px}
-.qrow{display:flex;justify-content:space-between;gap:8px}
-.bar{height:10px;border-radius:5px;background:var(--track);overflow:hidden}
-.bar i{display:block;height:100%;border-radius:5px}
-.go{display:flex;align-items:center;gap:12px;width:100%;border:0;font:inherit;text-align:left;cursor:pointer;
-  background:var(--mint);color:var(--mint-ink);border-radius:16px;
-  padding:14px 16px;box-shadow:0 5px 0 var(--mint-lip);margin-bottom:5px;text-decoration:none;
-  transition:transform .12s ease-out,box-shadow .12s ease-out}
-.go:active{transform:translateY(5px);box-shadow:0 0 0 var(--mint-lip)}
-.go .ic{flex:none}
-.go span{flex:1;display:flex;flex-direction:column;gap:1px}
-.go b{font-size:19px;font-weight:900}
-.go code{font-weight:800}
-.go small{font-size:14px;font-weight:700;opacity:.85}
-.topic{border-radius:16px;background:var(--key);box-shadow:0 4px 0 var(--key-lip);margin-bottom:4px}
-.topic[open]{background:var(--surf);box-shadow:var(--card-shadow);margin-bottom:0}
-.topic summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer;
-  font-size:19px;font-weight:900}
-.topic summary::-webkit-details-marker{display:none}
-.chev{color:var(--muted);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
-.topic[open] .chev{transform:rotate(180deg)}
-.tbody{display:flex;flex-direction:column;gap:14px;padding:0 16px 16px}
-.meta{font-size:14px;margin-top:-6px}
-.path{position:relative;display:flex;justify-content:space-between;align-items:flex-start;padding-top:18px}
-.path::before{content:"";position:absolute;left:36px;right:36px;top:53px;height:8px;border-radius:4px;background:var(--track)}
-.pnode{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;width:80px}
-.rwrap{height:78px;display:flex;align-items:center}
-.pfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px;line-height:1.35}
-.key{flex:none;text-decoration:none;font-weight:800;border-radius:10px;background:var(--key);box-shadow:0 3px 0 var(--key-lip)}
-.key.small{font-size:14px;padding:8px 12px}
-.ring{position:relative;width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:conic-gradient(var(--violet-soft) var(--deg), var(--track) 0deg);border:0;padding:0;font:inherit;color:inherit}
-.ring.big{width:78px;height:78px}
-.ring .face{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:17px;font-weight:900;font-variant-numeric:tabular-nums;background:var(--violet);color:#fff;box-shadow:0 4px 0 var(--violet-lip)}
-.ring.big .face{width:62px;height:62px;font-size:19px}
-.ring.now{background:conic-gradient(var(--sun) var(--deg), var(--track) 0deg)}
-.ring.now .face{background:var(--sun);color:var(--sun-ink);box-shadow:0 4px 0 var(--sun-lip)}
-.ring.passed{background:conic-gradient(var(--gold) var(--deg), var(--track) 0deg)}
-.ring.passed .face{background:var(--gold);color:#2d2a45;box-shadow:0 4px 0 var(--gold-lip)}
-.ring.owed{background:conic-gradient(var(--coral) var(--deg), var(--track) 0deg)}
-.ring.owed .face{background:var(--coral);color:#3a0f0a;box-shadow:0 4px 0 var(--coral-lip)}
-.ring.new{background:var(--surf)}
-.ring.new .face{background:var(--slot);border:2px dashed var(--muted);box-shadow:none}
-.you{position:absolute;top:-18px;left:50%;transform:translateX(-50%);z-index:2;font-size:11px;font-weight:900;
-  background:var(--sun);color:var(--sun-ink);padding:2px 9px;border-radius:8px;white-space:nowrap}
-.you.inline{position:static;transform:none;flex:none}
-.plabel{font-size:13px;font-weight:800;white-space:nowrap;color:var(--muted)}
-.plabel.here{color:var(--ink)}
-.thead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
-.thead h1{font-size:28px;font-weight:900;letter-spacing:-.5px;line-height:1.1}
-.thead p{font-size:14px;margin-top:2px}
-.lv{font-size:18px;font-weight:900;color:var(--violet-text);white-space:nowrap;cursor:help}
-.mapcard{padding:12px}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Headers */
+.phead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.phead h1{font-size:32px;line-height:36px;font-weight:500;letter-spacing:-.01em}
+.phead .meta{margin-top:4px;font-size:14px}
+.hello{display:flex;align-items:center;gap:12px;margin-top:-12px}
+.hello .spark{flex:none}
+.hello p{font-size:17px;line-height:24px;color:var(--ink2)}
+.note{background:var(--raised);border-radius:10px;padding:12px 16px;font-size:14px;color:var(--ink2)}
+.note b{color:var(--ink);font-weight:600;margin-right:4px}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:16px}
+.card h2{font-size:16px;line-height:24px;font-weight:500}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.figure{font-size:32px;line-height:36px;font-weight:500;margin-top:-8px}
+.link{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:500;color:var(--ink2);text-decoration:none;
+  padding:4px 8px;margin:-4px -8px;border-radius:8px;white-space:nowrap;transition:background-color .15s var(--ease),color .15s var(--ease)}
+.link:hover{background:var(--raised);color:var(--ink)}
+.link .ic{color:currentColor}
+
+/* Overview grid */
+.ov{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.ov-main,.ov-side{display:flex;flex-direction:column;gap:16px}
+
+/* The index card: the one bright thing on the overview */
+.icard{position:relative;background:var(--paper);color:var(--paper-ink);border-radius:6px;box-shadow:var(--paper-shadow);
+  padding:20px 24px 24px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"top top" "body btn";
+  gap:12px 24px;align-items:end;overflow:hidden;
+  background-image:linear-gradient(var(--paper-red),var(--paper-red)),
+    repeating-linear-gradient(to bottom,transparent 0,transparent 27px,var(--paper-rule) 27px,var(--paper-rule) 28px);
+  background-size:100% 1.5px,100% 100%;background-position:0 52px,0 52px;background-repeat:no-repeat,no-repeat}
+.icard-top{grid-area:top;display:flex;align-items:center;gap:12px;height:24px;margin-bottom:12px}
+.icard-label{font-size:13px;color:var(--paper-ink2)}
+.icard .cmd{background:rgba(31,27,22,.06);box-shadow:inset 0 0 0 1px rgba(31,27,22,.1);color:var(--paper-ink)}
+.icard-body{grid-area:body}
+.icard h2{font-size:28px;line-height:32px;font-weight:500;letter-spacing:-.01em}
+.icard p{margin-top:8px;color:var(--paper-ink2);font-size:15px}
+.copy{grid-area:btn;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:0;border-radius:8px;
+  background:var(--paper-ink);color:var(--paper);font:500 14px/1 Figtree,system-ui,sans-serif;cursor:pointer;white-space:nowrap;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);transition:background-color .15s var(--ease),transform .12s var(--ease)}
+.copy .ic{color:currentColor}
+.copy:hover{background:#3a332b}
+.copy:active{transform:scale(.97)}
+.copy.done{background:#2f6b4a}
+
+/* Today */
+.today{display:flex;flex-direction:column;gap:16px}
+.today li{display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px;align-items:start}
+.today li>.ic{margin-top:2px}
+.trow{display:flex;justify-content:space-between;gap:12px}
+.trow .fig{color:var(--ink2);font-size:14px}
+.bar{height:4px;border-radius:2px;background:var(--raised);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:2px;background:var(--ink2)}
+.bar.full i{background:var(--pos)}
+
+/* Subjects */
+.path{display:flex;align-items:flex-start;position:relative;padding:4px 0}
+.path::before{content:"";position:absolute;left:12.5%;right:12.5%;top:26px;height:1px;background:var(--line2)}
+.path li{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.path .plabel{font-size:13px;color:var(--muted)}
+.path li.here .plabel{color:var(--ink)}
+.on{font-size:14px;color:var(--ink2)}
+.on b{font-weight:500;color:var(--ink)}
+
+/* Nodes: the arc is the last score */
+.node{position:relative;width:var(--n);height:var(--n);border-radius:50%;border:0;padding:0;display:grid;place-items:center;
+  background:conic-gradient(var(--arc) var(--deg),var(--line2) 0deg);--arc:var(--ink2);color:var(--ink);font:inherit}
+.node::before{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--card)}
+.node span{position:relative;font-size:12px;font-weight:500;font-variant-numeric:tabular-nums}
+.node.passed{--arc:var(--pos)}
+.node.owed{--arc:var(--neg-soft)}
+.node.now{--arc:var(--accent)}
+.node.now::before{background:var(--accent)}
+.node.now span{color:var(--accent-ink)}
+.node.new{background:none}
+.node.new::before{inset:0;background:var(--card);border:1.5px dashed var(--line2)}
+
+/* Streak */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:4px}
+.week li{display:flex;flex-direction:column;align-items:center;gap:6px}
+.week i{display:grid;place-items:center;width:100%;height:32px;border-radius:6px;background:var(--raised)}
+.week span{font-size:12px;line-height:16px;color:var(--muted)}
+.week .done i{background:var(--accent)}
+.week .done .ic{color:var(--accent-ink)}
+.week .today i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--accent)}
+.week .today span{color:var(--accent-text)}
+.week .blank i{background:transparent;box-shadow:inset 0 0 0 1px var(--line2)}
+
+/* Topic */
+.level{text-align:right}
+.tgrid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.tside{display:flex;flex-direction:column;gap:16px}
+.mapcard{padding-bottom:24px}
 .mapscroll{overflow-x:auto}
 .map{position:relative;margin:0 auto}
 .edges{position:absolute;left:0;top:0}
-.edges path{fill:none;stroke:var(--track);stroke-width:5;stroke-linecap:round}
-.edges path.hot{stroke:var(--violet-soft)}
-.mnode{position:absolute;width:62px;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1}
-.mnode .ring{width:62px;height:62px;cursor:pointer}
-.mnode .ring .face{width:48px;height:48px;font-size:15px;box-shadow:0 3px 0 var(--violet-lip)}
-.mnode .ring.now .face{box-shadow:0 3px 0 var(--sun-lip)}
-.mnode .ring.passed .face{box-shadow:0 3px 0 var(--gold-lip)}
-.mnode .ring.owed .face{box-shadow:0 3px 0 var(--coral-lip)}
-.mnode .ring.new .face{box-shadow:none}
-.mnode .ring.sel{box-shadow:0 0 0 3px var(--ink)}
-.mnode .plabel{font-size:12px;background:var(--surf);padding:0 4px;border-radius:6px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);padding:0 4px}
-.legend span{display:flex;align-items:center;gap:6px}
-.lg{width:14px;height:14px;border-radius:7px;display:inline-block}
-.lg.passed{background:var(--gold)} .lg.doing{background:var(--violet)} .lg.owed{background:var(--coral)}
-.lg.new{border:2px dashed var(--muted)}
-.details .detail{display:flex;flex-direction:column;gap:6px}
-.details .detail[hidden]{display:none}
-.log summary{cursor:pointer;color:var(--violet-text);font-weight:800}
-.log table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
-.log th,.log td{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
-.log th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-.log .num{text-align:right}
-.foot{text-align:center;font-size:13px;color:var(--muted);margin-top:4px}
-.empty{color:var(--muted)}
+.edges path{fill:none;stroke:var(--line2);stroke-width:1.5}
+.edges path.hot{stroke:var(--ink2)}
+.mnode{position:absolute;width:62px;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1}
+.mnode .node{cursor:pointer;margin-top:7px;transition:box-shadow .15s var(--ease)}
+.mnode .node:hover{box-shadow:0 0 0 3px var(--line2)}
+.mnode .node.sel{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--ink)}
+.mnode .plabel{font-size:12px;line-height:16px;color:var(--muted);background:var(--card);padding:0 4px;border-radius:4px;white-space:nowrap}
+.mnode.here .plabel{color:var(--ink)}
+.you{position:absolute;top:-14px;font-size:11px;line-height:16px;font-weight:600;color:var(--accent-text)}
+.you.inline{position:static;margin-left:8px}
+.legend{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 16px;font-size:13px;color:var(--muted)}
+.legend li{display:flex;align-items:center;gap:6px}
+.lg{width:8px;height:8px;border-radius:50%;display:inline-block}
+.lg.passed{background:var(--pos)}.lg.doing{background:var(--ink2)}.lg.owed{background:var(--neg-soft)}
+.lg.new{box-shadow:inset 0 0 0 1.5px var(--muted)}
+.detail{display:flex;flex-direction:column;gap:4px}
+.detail[hidden]{display:none}
+.detail h2{font-size:20px;line-height:28px}
+.detail dl{margin-top:12px;display:flex;flex-direction:column}
+.detail dl div{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.detail dt{color:var(--muted)}
+.detail dd{text-align:right;font-variant-numeric:tabular-nums}
+.log table{width:100%;border-collapse:collapse;font-size:14px}
+.log th{text-align:left;font-weight:400;font-size:13px;color:var(--muted);padding:0 0 8px}
+.log td{padding:8px 0;border-top:1px solid var(--line);color:var(--ink2)}
+.log td:first-child{color:var(--ink);font-variant-numeric:tabular-nums}
+.log .fig{text-align:right}
+
+/* Narrow screens: the sidebar becomes a top bar, everything stacks */
+@media (max-width:1100px){
+  .ov,.tgrid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:860px){
+  .shell{display:block}
+  .side{position:sticky;top:0;z-index:5;height:auto;padding:12px 16px 8px;gap:8px;border-right:0;border-bottom:1px solid var(--line)}
+  .navlabel,.side-foot{display:none}
+  .tabs{flex-direction:row;overflow-x:auto;scrollbar-width:none;gap:4px}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs a{flex:none;height:32px}
+  .tabs a .ic{display:none}
+  .more{position:absolute;top:0;bottom:0;z-index:1;width:48px;display:flex;align-items:center;padding:0;border:0;cursor:pointer;color:var(--ink)}
+  .more[hidden]{display:none}
+  .more.left{left:0;justify-content:flex-start;background:linear-gradient(90deg,var(--deep) 55%,transparent)}
+  .more.right{right:0;justify-content:flex-end;background:linear-gradient(270deg,var(--deep) 55%,transparent)}
+  .more span{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--raised);box-shadow:inset 0 0 0 1px var(--line)}
+  .more .ic{color:var(--ink)}
+  .main{padding:24px 16px 48px}
+  .phead h1{font-size:28px;line-height:32px}
+  .icard{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "body" "btn";padding:16px 20px 20px}
+  .icard h2{font-size:24px;line-height:28px}
+  .copy{justify-self:start}
+  .card{padding:16px}
+  .hello{margin-top:-8px}
+}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 """
 
@@ -750,8 +853,9 @@ SCRIPT = """<script>
   if (q === "dark" || q === "light") document.documentElement.setAttribute("data-theme", q);
   var panels = [].slice.call(document.querySelectorAll(".panel"));
   var tabs = [].slice.call(document.querySelectorAll(".tabs a"));
-  // More tabs than fit the column: arrows at whichever end has more, the
-  // wheel scrolls the bar sideways, and the chosen tab slides into view.
+  // On a phone the sidebar is a top bar. More tabs than fit: arrows at
+  // whichever end has more, the wheel scrolls it sideways, and the chosen
+  // tab slides into view.
   var bar = document.querySelector(".tabs");
   var moreL = document.querySelector(".more.left"), moreR = document.querySelector(".more.right");
   function edges() {
@@ -760,16 +864,14 @@ SCRIPT = """<script>
     moreR.hidden = bar.scrollLeft >= max - 2;
   }
   function reveal(a, smooth) {
-    var pad = 56, x = a.offsetLeft, w = a.offsetWidth, to = null;
+    var pad = 48, x = a.offsetLeft, w = a.offsetWidth, to = null;
+    if (bar.scrollWidth <= bar.clientWidth) return;
     if (x - pad < bar.scrollLeft) to = x - pad;
     else if (x + w + pad > bar.scrollLeft + bar.clientWidth) to = x + w + pad - bar.clientWidth;
     if (to !== null) bar.scrollTo({left: Math.max(0, to), behavior: smooth ? "smooth" : "auto"});
   }
-  function nudge(dir) {
-    bar.scrollBy({left: dir * Math.round(bar.clientWidth * 0.7), behavior: "smooth"});
-  }
-  moreL.addEventListener("click", function () { nudge(-1); });
-  moreR.addEventListener("click", function () { nudge(1); });
+  moreL.addEventListener("click", function () { bar.scrollBy({left: -Math.round(bar.clientWidth * .7), behavior: "smooth"}); });
+  moreR.addEventListener("click", function () { bar.scrollBy({left: Math.round(bar.clientWidth * .7), behavior: "smooth"}); });
   bar.addEventListener("scroll", edges, {passive: true});
   window.addEventListener("resize", edges);
   window.addEventListener("load", edges);
@@ -786,10 +888,8 @@ SCRIPT = """<script>
     if (!document.getElementById("p-" + id)) id = "tab-overview";
     panels.forEach(function (p) { p.hidden = p.id !== "p-" + id; });
     tabs.forEach(function (a) {
-      if (a.getAttribute("href") === "#" + id) {
-        a.setAttribute("aria-current", "page");
-        reveal(a, scroll);
-      } else a.removeAttribute("aria-current");
+      if (a.getAttribute("href") === "#" + id) { a.setAttribute("aria-current", "page"); reveal(a, scroll); }
+      else a.removeAttribute("aria-current");
     });
     if (scroll) window.scrollTo(0, 0);
     edges();
@@ -806,12 +906,12 @@ SCRIPT = """<script>
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-copy]");
     if (!b) return;
-    var text = b.getAttribute("data-copy"), small = b.querySelector("small");
+    var text = b.getAttribute("data-copy"), label = b.querySelector("span");
     function said() {
-      if (!small) return;
-      var was = small.innerHTML;
-      small.textContent = small.getAttribute("data-say");
-      setTimeout(function () { small.innerHTML = was; }, 2200);
+      var was = label.textContent;
+      label.textContent = b.getAttribute("data-say");
+      b.classList.add("done");
+      setTimeout(function () { label.textContent = was; b.classList.remove("done"); }, 2200);
     }
     function fallback() {
       var t = document.createElement("textarea");
@@ -819,25 +919,20 @@ SCRIPT = """<script>
       try { document.execCommand("copy"); said(); } catch (err) {}
       document.body.removeChild(t);
     }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(said, fallback);
-    } else { fallback(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(said, fallback);
+    else fallback();
   });
   document.querySelectorAll(".mapcard").forEach(function (card) {
     var panel = card.closest(".panel");
     function pick(id) {
-      card.querySelectorAll(".ring[data-mod]").forEach(function (b) {
-        b.classList.toggle("sel", b.getAttribute("data-mod") === id);
-      });
+      card.querySelectorAll(".node[data-mod]").forEach(function (b) { b.classList.toggle("sel", b.getAttribute("data-mod") === id); });
       card.querySelectorAll(".edges path").forEach(function (p) {
         p.classList.toggle("hot", p.getAttribute("data-a") === id || p.getAttribute("data-b") === id);
       });
-      panel.querySelectorAll(".detail").forEach(function (d) {
-        d.hidden = d.getAttribute("data-detail") !== id;
-      });
+      panel.querySelectorAll(".detail").forEach(function (d) { d.hidden = d.getAttribute("data-detail") !== id; });
     }
     card.addEventListener("click", function (e) {
-      var b = e.target.closest(".ring[data-mod]");
+      var b = e.target.closest(".node[data-mod]");
       if (b) pick(b.getAttribute("data-mod"));
     });
     var start = panel.querySelector(".detail:not([hidden])");
@@ -848,30 +943,30 @@ SCRIPT = """<script>
 
 
 def font_face():
-    """Nunito, carried inside the page so it stays one file and works offline.
-    SIL Open Font License; the license ships beside the font in engine/fonts/."""
+    """Figtree, carried inside the page so it stays one file and works offline.
+    SIL Open Font License; OFL-Figtree.txt ships beside it in engine/fonts/."""
     if not os.path.isfile(FONT):
         return ""
     with open(FONT, "rb") as fh:
         data = base64.b64encode(fh.read()).decode("ascii")
-    return ('@font-face{font-family:"Nunito";font-style:normal;font-weight:600 900;font-display:swap;'
+    return ('@font-face{font-family:"Figtree";font-style:normal;font-weight:400 600;font-display:swap;'
             'src:url(data:font/woff2;base64,%s) format("woff2")}' % data)
 
 
 def render(c, news_data=None, show_news=True, demo=False):
     topics = c["topics"]
-    tabs = ['<a href="#tab-overview" aria-current="page">Overview</a>']
+    tabs = ['<a href="#tab-overview" aria-current="page">%s<span>Overview</span></a>' % icon("overview")]
     # Panel ids carry a "p-" the tab links don't, so a "#tab-x" address
     # never matches an element and the browser can't jump past the tab bar.
     panels = ['<section class="panel" id="p-tab-overview">%s</section>' % overview_html(c, demo)]
     for t in topics:
-        tabs.append('<a href="#tab-%s">%s</a>' % (esc(t["slug"]), esc(t["title"])))
-        panels.append('<section class="panel" id="p-tab-%s">%s</section>' % (esc(t["slug"]), topic_html(t)))
+        tabs.append('<a href="#tab-%s">%s<span>%s</span></a>' % (esc(t["slug"]), icon("book"), esc(t["title"])))
+        panels.append('<section class="panel" id="p-tab-%s" hidden>%s</section>' % (esc(t["slug"]), topic_html(t)))
     extra_css = ""
     if news is not None and show_news:
         n = news.panel(news_data)
-        tabs.append('<a href="#tab-news">News</a>')
-        panels.append('<section class="panel" id="p-tab-news">%s</section>' % n["html"])
+        tabs.append('<a href="#tab-news">%s<span>News</span></a>' % icon("news"))
+        panels.append('<section class="panel" id="p-tab-news" hidden>%s</section>' % n["html"])
         extra_css = n["css"]
     return """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
@@ -879,17 +974,24 @@ def render(c, news_data=None, show_news=True, demo=False):
 <meta name="color-scheme" content="dark light">
 <title>Study Engine</title>
 <style>%s%s%s</style></head>
-<body><div class="app">
+<body><div class="shell">
+<aside class="side">
+<div class="brand"><span class="mark" aria-hidden="true"></span>Study Engine</div>
+<div>
 <div class="tabwrap">
-<button class="more left" type="button" aria-label="Scroll tabs left" hidden><span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2 4 7l5 5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+<button class="more left" type="button" aria-label="Scroll tabs left" hidden><span>%s</span></button>
 <nav class="tabs" aria-label="Sections">%s</nav>
-<button class="more right" type="button" aria-label="Scroll tabs right" hidden><span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
-</div>
+<button class="more right" type="button" aria-label="Scroll tabs right" hidden><span>%s</span></button>
+</div></div>
+<p class="side-foot">Rebuilt %s</p>
+</aside>
+<main class="main">
 %s
-</div>
+</main></div>
 %s
 </body></html>
-""" % (font_face(), CSS, extra_css, "".join(tabs), "\n".join(panels), SCRIPT)
+""" % (font_face(), CSS, extra_css, icon("left", 16), "".join(tabs), icon("right", 16),
+       date_text(datetime.datetime.now(), "{d} %b, %H:%M"), "\n".join(panels), SCRIPT)
 
 
 def demo_today():

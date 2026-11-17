@@ -15,6 +15,7 @@ every call. A timeout is reported as inconclusive, never as a pass.
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -338,9 +339,14 @@ def main():
         html = open(os.path.join(root, "view", "dashboard.html"), encoding="utf-8").read()
         check("dashboard is self-contained",
               not any(n in html for n in ("<link href", "<script src", "<img src")))
-        check("dashboard reports the override count", ">1<" in html and "overrides" in html)
+        # The figure itself, not a bare ">1<": the chapter detail panel prints
+        # "<dd>1</dd>" for one attempt, which kept the loose test green with
+        # the count forced to 0.
+        check("dashboard reports the override count",
+              'Gate overrides on record</p><p class="figure">1</p>' in html,
+              re.findall(r"Gate overrides on record</p><p[^>]*>[^<]*<", html))
         check("a diagnosis does not move \"You're on\"",
-              "You\u2019re on Second." in html,   # Loose Topic is really on First
+              "You\u2019re on <b>Second</b>" in html,   # Loose Topic is really on First
               [l for l in html.split("<") if "re on" in l][:3])
 
         # The public kit ships without engine/news.py. Build from a copy of the

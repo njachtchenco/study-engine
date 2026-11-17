@@ -152,8 +152,9 @@ regenerates in well under a second.
 - The dashboard's font is Figtree, read from `engine/fonts/` and embedded in
   the page as base64, so the page stays one offline file. It is under the SIL
   Open Font License (`engine/fonts/OFL-Figtree.txt`, which ships with it).
-  Without the font file the page falls back to the system font. Nunito and
-  `OFL.txt` in the same folder are the lite setup page's font.
+  Without the font file the page falls back to the system font. The lite
+  setup page (`lite/setup.html`) embeds the same font and uses the same
+  colours, so a change to the dashboard's look belongs in both.
 - Spark, the dashboard's mascot, only says things computed from `topics/`
   (`spark_state` in `build_view.py`). Never give it a line the data can't back.
 - `lite/` is the no-install version for a claude.ai Project:
